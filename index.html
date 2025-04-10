@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2x1 Label Maker</title>
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.violet.min.css" />
+    <style>
+      canvas {
+        display: none; /* Hide the canvas */
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <form id="cardForm">
+        <fieldset>
+          <label for="customText">
+            Label Text
+            <textarea id="customText" placeholder="Enter label text"></textarea>
+          </label>
+        </fieldset>
+        <button type="button" id="generateBtn">Generate</button>
+      </form>
+    </main>
+    <canvas id="labelCanvas"></canvas>
+    <script>
+      const canvas = document.getElementById("labelCanvas");
+      canvas.width = mmToPx(50.8); // 2 inches in mm
+      canvas.height = mmToPx(25.4); // 1 inch in mm
+      const ctx = canvas.getContext("2d");
+
+      // Function to convert mm to pixels at 300 DPI
+      function mmToPx(mm) {
+        return (mm / 25.4) * 300; // 1 inch = 25.4 mm and we're using 300 DPI
+      }
+
+      // Function to inject whitespace character for letter spacing
+      function injectWhitespace(text) {
+        return text.split("").join(String.fromCharCode(8202));
+      }
+
+      // Load the Roboto font
+      const robotoFont = new FontFace("Roboto", "url(../fonts/Roboto-Bold.ttf)");
+
+      robotoFont.load().then(function (font) {
+        // Ready to use the font in a canvas context
+        console.log("Roboto font ready");
+
+        // Add font to the document
+        document.fonts.add(font);
+
+        // Generate the image and download it
+        document.getElementById("generateBtn").addEventListener("click", function () {
+          const labelText = document.getElementById("customText").value;
+
+          // Clear the canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // Set up text properties
+          const fontSize = mmToPx(2.25) * 2;
+          ctx.fillStyle = "black";
+          ctx.font = `bold ${fontSize}px Roboto`;
+          ctx.textBaseline = "middle";
+          ctx.textAlign = "center";
+
+          // Split text into lines and draw each line
+          const lines = labelText.split("\n");
+          const lineHeight = fontSize * 1.5;
+          const textYStart = (canvas.height - (lines.length - 1) * lineHeight) / 2;
+
+          lines.forEach((line, index) => {
+            const textX = canvas.width / 2;
+            const textY = textYStart + index * lineHeight;
+            ctx.fillText(injectWhitespace(line.toUpperCase()), textX, textY);
+          });
+
+          // Download the final canvas as an image
+          const link = document.createElement("a");
+          link.download = `${labelText.replaceAll("\n", " ")} Label.png`;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        });
+      });
+    </script>
+  </body>
+</html>
